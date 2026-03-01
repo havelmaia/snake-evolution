@@ -1,0 +1,8 @@
+{
+  "control_scheme": "both",
+  "sfx_enabled": true,
+  "music_enabled": true,
+  "sfx_volume": 1.0,
+  "music_volume": 1.0,
+  "music_path": "assets\\music\\theme.ogg"
+}
