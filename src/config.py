@@ -103,6 +103,12 @@ SPRITE_PATH = "assets/sprites/snake.png"
 FRUIT_SPRITE_PATH = "assets/sprites/fruits.png"
 DECO_SPRITE_PATH = "assets/sprites/decorations.png"
 
+SFX_EAT      = "assets/sounds/eat.ogg"
+SFX_SPECIAL   = "assets/sounds/special.ogg"
+SFX_GAMEOVER  = "assets/sounds/gameover.ogg"
+BGM_MENU      = "assets/sounds/menu_bgm.ogg"
+BGM_GAME      = "assets/sounds/game_bgm.ogg"
+
 FONT_TITLE = "assets/fonts/PressStart2P.ttf"
 FONT_BODY  = "assets/fonts/Silkscreen.ttf"
 FONT_BOLD  = "assets/fonts/Silkscreen-Bold.ttf"
