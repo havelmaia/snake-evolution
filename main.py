@@ -59,6 +59,7 @@ class Game:
         self.state = STATE_MENU
         self.move_timer = 0
         self.special_timer = 0
+        self.sounds.play_menu_music()
 
     # === CONTROLE DE ESTADO ===
 
@@ -71,11 +72,13 @@ class Game:
         self.special_timer = 0
         self.state = STATE_PLAYING
         self._spawn_fruit(FruitType.NORMAL)
+        self.sounds.play_game_music()
 
     def game_over(self):
         self.state = STATE_GAME_OVER
         if self.score > self.high_score:
             self.high_score = self.score
+        self.sounds.stop_music()
         self.sounds.play_gameover()
 
     # === FRUTAS ===
@@ -142,18 +145,21 @@ class Game:
             self.state = STATE_PAUSED
         elif key == pygame.K_ESCAPE:
             self.state = STATE_MENU
+            self.sounds.play_menu_music()
 
     def _handle_gameover_input(self, key):
         if key in (pygame.K_RETURN, pygame.K_SPACE):
             self.start_game()
         elif key == pygame.K_ESCAPE:
             self.state = STATE_MENU
+            self.sounds.play_menu_music()
 
     def _handle_paused_input(self, key):
         if key in (pygame.K_p, pygame.K_RETURN, pygame.K_SPACE):
             self.state = STATE_PLAYING
         elif key == pygame.K_ESCAPE:
             self.state = STATE_MENU
+            self.sounds.play_menu_music()
 
     # === UPDATE ===
 
