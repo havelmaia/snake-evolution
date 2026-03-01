@@ -10,7 +10,10 @@ class SoundManager:
             self.eat = pygame.mixer.Sound('assets/sounds/eat.ogg')# COMIDA NORMAL
             self.special = pygame.mixer.Sound('assets/sounds/special.ogg') # COMIDA ESPECIAL
             self.gameover = pygame.mixer.Sound('assets/sounds/gameover.ogg') # GAME OVER
-            
+
+            self.speed = pygame.mixer.Sound('assets/sounds/speed.ogg')
+            self.speed.set_volume(0.6)
+
             self.eat.set_volume(0.5)
             self.special.set_volume(0.6)
             self.gameover.set_volume(0.8)
@@ -26,6 +29,11 @@ class SoundManager:
     def play_special(self):
         if self.enabled:
             self.special.play()
+
+    #Som das uvas
+    def play_speed(self):
+        if self.enabled:
+            self.speed.play()
 
     def play_gameover(self):
         if self.enabled:

@@ -193,7 +193,7 @@ class Game:
 
                 if fruit.fruit_type == FruitType.SPEED:
                     self.snake.activate_boost(SPEED_BOOST_DURATION)
-                    self.sounds.play_special()
+                    self.sounds.play_speed()
                 elif fruit.fruit_type == FruitType.GOLDEN:
                     self.sounds.play_special()
                 else:
