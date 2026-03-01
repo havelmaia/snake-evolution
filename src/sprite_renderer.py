@@ -36,7 +36,7 @@ def _make_boost_sprites(sprites):
     result = []
     for sprite in sprites:
         tinted = sprite.copy()
-        tinted.fill((80, 160, 255, 100), special_flags=pygame.BLEND_RGBA_ADD)
+        tinted.fill((80, 160, 255, 0), special_flags=pygame.BLEND_RGB_ADD)
         result.append(tinted)
     return result
 
@@ -57,16 +57,11 @@ TAIL_MAP = {
 
 
 def _corner_index(prev_pos, curr_pos, next_pos):
-    """
-    Determina qual sprite de curva usar baseado nas posições
-    do segmento anterior, atual e próximo.
-    """
     dx1 = prev_pos[0] - curr_pos[0]
     dy1 = prev_pos[1] - curr_pos[1]
     dx2 = next_pos[0] - curr_pos[0]
     dy2 = next_pos[1] - curr_pos[1]
 
-    # Soma das direções indica o canto
     sx = dx1 + dx2
     sy = dy1 + dy2
 

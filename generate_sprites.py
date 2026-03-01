@@ -30,7 +30,6 @@ def draw_head_right():
     pygame.draw.ellipse(s, DARK, (H - 6, PAD - 1, H + 2, CELL - PAD * 2 + 2))
     pygame.draw.rect(s, MID, (0, PAD + 1, H, CELL - PAD * 2 - 2))
     pygame.draw.ellipse(s, MID, (H - 4, PAD + 1, H, CELL - PAD * 2 - 2))
-    pygame.draw.rect(s, LIGHT, (1, PAD + 2, H - 2, 4))
     for ey in (H - 5, H + 5):
         pygame.draw.circle(s, EYE_W, (CELL - 9, ey), 4)
         pygame.draw.circle(s, EYE_P, (CELL - 8, ey), 2)
@@ -65,7 +64,6 @@ def draw_corner(corner):
     cx, cy = centers[corner]
     r_out = CELL - PAD + 1
     r_mid = CELL - PAD - 1
-    r_hl = CELL - PAD - 2
     angles = {"tl": (0, math.pi/2), "tr": (math.pi/2, math.pi),
               "bl": (-math.pi/2, 0), "br": (math.pi, 3*math.pi/2)}
     a0, a1 = angles[corner]
@@ -83,10 +81,6 @@ def draw_corner(corner):
     inner2.reverse()
     if len(outer2) >= 3:
         pygame.draw.polygon(s, MID, outer2 + inner2)
-    outer3, inner3 = arc(r_hl, a0, a1, steps), arc(r_hl-4, a0, a1, steps)
-    inner3.reverse()
-    if len(outer3) >= 3:
-        pygame.draw.polygon(s, LIGHT, outer3 + inner3)
     return s
 
 
@@ -95,10 +89,8 @@ def draw_tail_right():
     w = CELL - PAD * 2 + 2
     pygame.draw.rect(s, DARK, (0, PAD - 1, H, w))
     pygame.draw.rect(s, MID,  (0, PAD + 1, H, w - 4))
-    pygame.draw.rect(s, LIGHT, (1, PAD + 2, H - 2, 4))
     pygame.draw.ellipse(s, DARK, (H - 6, PAD - 1, H + 2, w))
     pygame.draw.ellipse(s, MID,  (H - 4, PAD + 1, H, w - 4))
-    pygame.draw.ellipse(s, LIGHT, (H - 4, PAD + 2, H - 2, 4))
     return s
 
 
