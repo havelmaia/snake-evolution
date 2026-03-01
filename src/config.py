@@ -1,3 +1,26 @@
+import sys
+import os
+
+
+def resource_path(relative_path):
+    """Retorna o caminho correto para assets, funciona tanto em dev quanto empacotado."""
+    if getattr(sys, 'frozen', False):
+        base = sys._MEIPASS
+    else:
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, relative_path)
+
+
+def user_data_path(filename):
+    """Retorna caminho para dados do usuário (settings, saves)."""
+    if getattr(sys, 'frozen', False):
+        # Empacotado: usa pasta do executável
+        base = os.path.dirname(sys.executable)
+    else:
+        # Dev: usa raiz do projeto
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, filename)
+
 
 # TELA
 
@@ -72,7 +95,7 @@ SNAKE_SPEED            = 6
 SPEED_INCREMENT        = 1
 MAX_SPEED              = 16
 SPEED_BOOST_AMOUNT     = 5
-SPEED_BOOST_DURATION   = 150
+SPEED_BOOST_DURATION   = 80
 
 POINTS_NORMAL = 10
 POINTS_GOLDEN = 50
@@ -99,19 +122,19 @@ DIR_RIGHT = (1,  0)
 # SPRITES
 
 SPRITE_CELL = 32
-SPRITE_PATH = "assets/sprites/snake.png"
-FRUIT_SPRITE_PATH = "assets/sprites/fruits.png"
-DECO_SPRITE_PATH = "assets/sprites/decorations.png"
+SPRITE_PATH = resource_path("assets/sprites/snake.png")
+FRUIT_SPRITE_PATH = resource_path("assets/sprites/fruits.png")
+DECO_SPRITE_PATH = resource_path("assets/sprites/decorations.png")
 
-SFX_EAT      = "assets/sounds/eat.ogg"
-SFX_SPECIAL   = "assets/sounds/special.ogg"
-SFX_GAMEOVER  = "assets/sounds/gameover.ogg"
-BGM_MENU      = "assets/sounds/menu_bgm.ogg"
-BGM_GAME      = "assets/sounds/game_bgm.ogg"
+SFX_EAT      = resource_path("assets/sounds/eat.ogg")
+SFX_SPECIAL   = resource_path("assets/sounds/special.ogg")
+SFX_GAMEOVER  = resource_path("assets/sounds/gameover.ogg")
+BGM_MENU      = resource_path("assets/sounds/menu_bgm.ogg")
+BGM_GAME      = resource_path("assets/sounds/game_bgm.ogg")
 
-FONT_TITLE = "assets/fonts/PressStart2P.ttf"
-FONT_BODY  = "assets/fonts/Silkscreen.ttf"
-FONT_BOLD  = "assets/fonts/Silkscreen-Bold.ttf"
+FONT_TITLE = resource_path("assets/fonts/PressStart2P.ttf")
+FONT_BODY  = resource_path("assets/fonts/Silkscreen.ttf")
+FONT_BOLD  = resource_path("assets/fonts/Silkscreen-Bold.ttf")
 
 SPR_HEAD_RIGHT  = 0
 SPR_HEAD_LEFT   = 1

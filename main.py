@@ -20,13 +20,14 @@ from src.config import (
     TITLE_COLOR, TITLE_GLOW, GAMEOVER_COLOR, GAMEOVER_GLOW,
     FRUIT_COLOR, FRUIT_GOLDEN_COLOR, FRUIT_SPEED_COLOR,
     FONT_TITLE, FONT_BODY, FONT_BOLD,
+    user_data_path,
 )
 from src.entities import Snake, Fruit, FruitType
+from src.entities.fruit import _load_fruit_sprites
 from src.particles import ParticleSystem
 from src.decorations import BorderDecorations
 from src.sound_gen import SoundManager
 from src.menu_snake import MenuSnake
-from src.entities.fruit import _load_fruit_sprites
 
 
 STATE_MENU = "menu"
@@ -44,10 +45,11 @@ class Game:
         pygame.display.set_caption("Snake Evolution")
         self.clock = pygame.time.Clock()
 
-        self.font_small = pygame.font.Font(FONT_BODY, 20)
-        self.font_medium = pygame.font.Font(FONT_BOLD, 28)
+        self.font_small = pygame.font.Font(FONT_BODY, 18)
+        self.font_medium = pygame.font.Font(FONT_BOLD, 24)
         self.font_large = pygame.font.Font(FONT_TITLE, 32)
-        self.font_title = pygame.font.Font(FONT_TITLE, 42)
+        self.font_title = pygame.font.Font(FONT_TITLE, 38)
+        self.font_subtitle = pygame.font.Font(FONT_BOLD, 18)
 
         self.snake = Snake()
         self.fruits = []
@@ -58,6 +60,8 @@ class Game:
 
         self.score = 0
         self.high_score = 0
+        self.fruits_eaten = {FruitType.NORMAL: 0, FruitType.GOLDEN: 0, FruitType.SPEED: 0}
+        self.header_fruit_sprites = None
         self.state = STATE_MENU
         self.move_timer = 0
         self.special_timer = 0
@@ -83,9 +87,10 @@ class Game:
         # ====== MENU UI ======
         self.menu_page = "main"   # "main" | "settings" | "controls" | "audio"
         self.menu_index = 0
+        self.paused_game = False
 
         # ====== SETTINGS (carrega/salva) ======
-        self.settings_path = "settings.json"
+        self.settings_path = user_data_path("settings.json")
         self.settings = {
             "control_scheme": "both",  # "arrows" | "wasd" | "both"
             "sfx_enabled": True,
@@ -109,62 +114,37 @@ class Game:
                 with open(self.settings_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 if isinstance(data, dict):
+                    self.high_score = data.pop("high_score", 0)
                     self.settings.update(data)
         except Exception:
             pass
 
     def _save_settings(self):
         try:
+            data = {**self.settings, "high_score": self.high_score}
             with open(self.settings_path, "w", encoding="utf-8") as f:
-                json.dump(self.settings, f, ensure_ascii=False, indent=2)
+                json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception:
             pass
 
     def _apply_audio_settings(self):
-        # Volume SFX — se o SoundManager do seu amigo tiver setter, usamos.
-        if hasattr(self.sounds, "set_sfx_volume"):
-            try:
-                self.sounds.set_sfx_volume(float(self.settings.get("sfx_volume", 0.8)))
-            except Exception:
-                pass
-
-        # Volume Música — se o SoundManager do seu amigo tiver setter, usamos.
-        if hasattr(self.sounds, "set_music_volume"):
-            try:
-                self.sounds.set_music_volume(float(self.settings.get("music_volume", 0.8)))
-            except Exception:
-                pass
+        self.sounds.set_sfx_volume(float(self.settings.get("sfx_volume", 0.8)))
+        self.sounds.set_music_volume(float(self.settings.get("music_volume", 0.8)))
+        self.sounds.set_sfx_enabled(self.settings.get("sfx_enabled", True))
+        self.sounds.set_music_enabled(self.settings.get("music_enabled", True))
 
     # ======================================================
     # SOM (integração com o código do seu amigo)
     # ======================================================
 
     def _music_menu(self):
-        if not self.settings.get("music_enabled", True):
-            self._music_stop()
-            return
-        if hasattr(self.sounds, "play_menu_music"):
-            try:
-                self.sounds.play_menu_music()
-            except Exception:
-                pass
+        self.sounds.play_menu_music()
 
     def _music_game(self):
-        if not self.settings.get("music_enabled", True):
-            self._music_stop()
-            return
-        if hasattr(self.sounds, "play_game_music"):
-            try:
-                self.sounds.play_game_music()
-            except Exception:
-                pass
+        self.sounds.play_game_music()
 
     def _music_stop(self):
-        if hasattr(self.sounds, "stop_music"):
-            try:
-                self.sounds.stop_music()
-            except Exception:
-                pass
+        self.sounds.stop_music()
 
     # ======================================================
     # HELPERS VISUAIS
@@ -281,6 +261,8 @@ class Game:
 
     def _current_menu_items(self):
         if self.menu_page == "main":
+            if self.paused_game:
+                return ["Continuar", "Recomeçar", "Configurações", "Sair"]
             return ["Começar", "Configurações", "Sair"]
         if self.menu_page == "settings":
             return ["Controles", "Sons", "Voltar"]
@@ -308,7 +290,13 @@ class Game:
 
     def _menu_activate(self, label):
         if self.menu_page == "main":
-            if label.startswith("Começar"):
+            if label.startswith("Continuar"):
+                self.state = STATE_PLAYING
+                self.paused_game = False
+                self._music_game()
+                return
+            if label.startswith("Começar") or label.startswith("Recomeçar"):
+                self.paused_game = False
                 self.start_game()
                 return
             if label.startswith("Configurações"):
@@ -354,21 +342,18 @@ class Game:
         if self.menu_page == "audio":
             if label.startswith("Efeitos sonoros"):
                 self.settings["sfx_enabled"] = not self.settings.get("sfx_enabled", True)
+                self._apply_audio_settings()
                 self._save_settings()
                 return
             if label.startswith("Música"):
                 self.settings["music_enabled"] = not self.settings.get("music_enabled", True)
-                self._save_settings()
                 self._apply_audio_settings()
-                # aplica imediatamente (menu/game)
-                if self.state == STATE_MENU:
-                    self._music_menu()
-                elif self.state == STATE_PLAYING:
-                    self._music_game()
-                else:
-                    # overlays: só para
-                    if not self.settings.get("music_enabled", True):
-                        self._music_stop()
+                self._save_settings()
+                if self.settings["music_enabled"]:
+                    if self.state == STATE_MENU:
+                        self._music_menu()
+                    elif self.state == STATE_PLAYING:
+                        self._music_game()
                 return
             if label.startswith("Voltar"):
                 self.menu_page = "settings"
@@ -377,8 +362,11 @@ class Game:
 
     def _menu_back(self):
         if self.menu_page == "main":
-            pygame.quit()
-            sys.exit()
+            if self.paused_game:
+                self.state = STATE_PLAYING
+                self.paused_game = False
+                self._music_game()
+            return
         if self.menu_page == "settings":
             self.menu_page = "main"
             self.menu_index = 0
@@ -395,22 +383,14 @@ class Game:
             v = float(self.settings.get("sfx_volume", 0.8))
             v = max(0.0, min(1.0, v + direction * 0.1))
             self.settings["sfx_volume"] = v
-            if hasattr(self.sounds, "set_sfx_volume"):
-                try:
-                    self.sounds.set_sfx_volume(v)
-                except Exception:
-                    pass
+            self.sounds.set_sfx_volume(v)
             self._save_settings()
 
         elif self.menu_index == 3:  # Volume Música
             v = float(self.settings.get("music_volume", 0.8))
             v = max(0.0, min(1.0, v + direction * 0.1))
             self.settings["music_volume"] = v
-            if hasattr(self.sounds, "set_music_volume"):
-                try:
-                    self.sounds.set_music_volume(v)
-                except Exception:
-                    pass
+            self.sounds.set_music_volume(v)
             self._save_settings()
 
     # ======================================================
@@ -423,6 +403,17 @@ class Game:
         self.menu_index = 0
         self.menu_enter_t = 0.0
         self.menu_type_t = 0.0
+        self.paused_game = False
+        self.ui_pixels.clear()
+        self._music_menu()
+
+    def _pause_to_menu(self):
+        self.state = STATE_MENU
+        self.menu_page = "main"
+        self.menu_index = 0
+        self.menu_enter_t = 0.0
+        self.menu_type_t = 0.0
+        self.paused_game = True
         self.ui_pixels.clear()
         self._music_menu()
 
@@ -431,6 +422,7 @@ class Game:
         self.fruits.clear()
         self.particles.clear()
         self.score = 0
+        self.fruits_eaten = {FruitType.NORMAL: 0, FruitType.GOLDEN: 0, FruitType.SPEED: 0}
         self.move_timer = 0
         self.special_timer = 0
         self.state = STATE_PLAYING
@@ -441,18 +433,14 @@ class Game:
         self.state = STATE_GAME_OVER
         if self.score > self.high_score:
             self.high_score = self.score
+            self._save_settings()
 
         self.go_enter_t = 0.0
         self.go_score_display = 0
         self.go_burst_done = False
 
-        # som do seu amigo
         self._music_stop()
-        if self.settings.get("sfx_enabled", True):
-            try:
-                self.sounds.play_gameover()
-            except Exception:
-                pass
+        self.sounds.play_gameover()
 
     # ======================================================
     # FRUTAS / VELOCIDADE
@@ -550,10 +538,8 @@ class Game:
 
         if key in direction_map:
             self.snake.set_direction(direction_map[key])
-        elif key == pygame.K_p:
-            self.state = STATE_PAUSED
-        elif key == pygame.K_ESCAPE:
-            self._enter_menu("main")
+        elif key in (pygame.K_SPACE, pygame.K_ESCAPE):
+            self._pause_to_menu()
 
     def _handle_gameover_input(self, key):
         if key in (pygame.K_RETURN, pygame.K_SPACE):
@@ -562,7 +548,7 @@ class Game:
             self._enter_menu("main")
 
     def _handle_paused_input(self, key):
-        if key in (pygame.K_p, pygame.K_RETURN, pygame.K_SPACE):
+        if key in (pygame.K_SPACE, pygame.K_RETURN):
             self.state = STATE_PLAYING
         elif key == pygame.K_ESCAPE:
             self._enter_menu("main")
@@ -608,24 +594,17 @@ class Game:
         for fruit in self.fruits[:]:
             if head == fruit.position:
                 self.score += fruit.points
+                self.fruits_eaten[fruit.fruit_type] += 1
                 self.snake.grow(fruit.growth)
                 self.particles.emit(fruit.position[0], fruit.position[1], fruit.color)
 
-                # SFX respeitando config
-                if self.settings.get("sfx_enabled", True):
-                    try:
-                        if fruit.fruit_type == FruitType.SPEED:
-                            self.snake.activate_boost(SPEED_BOOST_DURATION)
-                            self.sounds.play_special()
-                        elif fruit.fruit_type == FruitType.GOLDEN:
-                            self.sounds.play_special()
-                        else:
-                            self.sounds.play_eat()
-                    except Exception:
-                        pass
+                if fruit.fruit_type == FruitType.SPEED:
+                    self.snake.activate_boost(SPEED_BOOST_DURATION)
+                    self.sounds.play_special()
+                elif fruit.fruit_type == FruitType.GOLDEN:
+                    self.sounds.play_special()
                 else:
-                    if fruit.fruit_type == FruitType.SPEED:
-                        self.snake.activate_boost(SPEED_BOOST_DURATION)
+                    self.sounds.play_eat()
 
                 self.fruits.remove(fruit)
                 if fruit.fruit_type == FruitType.NORMAL:
@@ -680,8 +659,38 @@ class Game:
         text = self.font_small.render(f"PONTOS  {self.score}", True, SCORE_COLOR)
         self.screen.blit(text, text.get_rect(midleft=(20, HEADER_HEIGHT // 2)))
 
-        size_text = self.font_small.render(f"TAMANHO  {len(self.snake)}", True, TEXT_SECONDARY)
-        self.screen.blit(size_text, size_text.get_rect(center=(WINDOW_WIDTH // 2, HEADER_HEIGHT // 2)))
+        # Contadores de frutas no centro
+        if self.header_fruit_sprites is None:
+            sprites = _load_fruit_sprites()
+            if sprites:
+                self.header_fruit_sprites = [
+                    pygame.transform.scale(s, (20, 20)) for s in sprites
+                ]
+            else:
+                self.header_fruit_sprites = []
+
+        icon_size = 20
+        gap = 6
+        fruit_order = [FruitType.NORMAL, FruitType.GOLDEN, FruitType.SPEED]
+        counts = [str(self.fruits_eaten[ft]) for ft in fruit_order]
+        count_surfs = [self.font_small.render(c, True, SCORE_COLOR) for c in counts]
+
+        # Calcular largura total: (icone + gap + numero) * 3 + espaço entre grupos
+        group_gap = 16
+        total_w = 0
+        for cs in count_surfs:
+            total_w += icon_size + gap + cs.get_width()
+        total_w += group_gap * (len(fruit_order) - 1)
+
+        cx = WINDOW_WIDTH // 2 - total_w // 2
+        cy = HEADER_HEIGHT // 2
+
+        for i, ft in enumerate(fruit_order):
+            if self.header_fruit_sprites and i < len(self.header_fruit_sprites):
+                self.screen.blit(self.header_fruit_sprites[i], (cx, cy - icon_size // 2))
+            cx += icon_size + gap
+            self.screen.blit(count_surfs[i], count_surfs[i].get_rect(midleft=(cx, cy)))
+            cx += count_surfs[i].get_width() + group_gap
 
         if self.snake.speed_boost:
             boost_text = self.font_small.render("BOOST!", True, (80, 180, 255))
@@ -780,36 +789,38 @@ class Game:
 
         # layout interno
         pad_x = 28
-        pad_top = 22
-        pad_bottom = 18
-        footer_h = 44
-        title_h = 120
+        pad_top = 18
+        pad_bottom = 14
+        footer_h = 38
+        title_h = 100
+        subtitle_h = 32
 
         inner_left = px + pad_x
         inner_right = px + panel_w - pad_x
         inner_w = inner_right - inner_left
 
-        title_y = py + pad_top + 22
+        title_y = py + pad_top + 18
         self._draw_menu_title(cx, title_y)
 
         page_name = {
-            "main": "Menu",
+            "main": "",
             "settings": "Configurações",
             "controls": "Controles",
             "audio": "Sons",
-        }.get(self.menu_page, "Menu")
-        subtitle = self.font_small.render(page_name, True, TEXT_SECONDARY)
-        self.screen.blit(subtitle, subtitle.get_rect(center=(cx, py + pad_top + 104)))
+        }.get(self.menu_page, "")
+        if page_name:
+            subtitle = self.font_subtitle.render(page_name, True, TEXT_SECONDARY)
+            self.screen.blit(subtitle, subtitle.get_rect(center=(cx, py + title_h + subtitle_h // 2)))
 
-        items_top = py + title_h
+        items_top = py + title_h + (subtitle_h if page_name else 0)
         items_bottom = py + panel_h - footer_h - pad_bottom
         items_h = max(10, items_bottom - items_top)
 
         items = self._current_menu_items()
         n = len(items)
 
-        line_h = 38 if self.menu_page in ("audio", "controls") else 42
-        gap = 10
+        line_h = 34
+        gap = 8
         needed = n * line_h + (n - 1) * gap
         if needed > items_h:
             gap = max(4, gap - int((needed - items_h) / max(1, n)))
@@ -839,14 +850,18 @@ class Game:
             rect = surf.get_rect(center=(cx, y))
             self.screen.blit(surf, rect)
 
-        footer_y1 = py + panel_h - footer_h + 8
-        footer_y2 = footer_y1 + 18
-        hint1 = "↑↓ navegar   ENTER selecionar"
-        hint2 = "ESC voltar" + ("   ←→ ajustar" if self.menu_page == "audio" else "")
-        h1 = self.font_small.render(hint1, True, TEXT_SECONDARY)
-        h2 = self.font_small.render(hint2, True, TEXT_SECONDARY)
-        self.screen.blit(h1, h1.get_rect(center=(cx, footer_y1)))
-        self.screen.blit(h2, h2.get_rect(center=(cx, footer_y2)))
+        footer_cy = py + panel_h - footer_h // 2
+        hints = []
+        if self.menu_page == "audio":
+            hints = ["W/S Navegar", "A/D Ajustar", "ENTER Confirmar"]
+        elif self.menu_page == "main" and not self.paused_game:
+            hints = ["W/S Navegar", "ENTER Confirmar"]
+        else:
+            hints = ["W/S Navegar", "ENTER Confirmar", "ESC Voltar"]
+
+        hint_text = "   ".join(hints)
+        hint_surf = self._render_fit(hint_text, self.font_small, self.font_small, TEXT_SECONDARY, max_width=int(inner_w * 0.95))
+        self.screen.blit(hint_surf, hint_surf.get_rect(center=(cx, footer_cy)))
 
         self._draw_ui_pixels()
 

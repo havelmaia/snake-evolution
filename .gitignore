@@ -25,3 +25,9 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+
+# PyInstaller
+*.spec.bak
+
+# Jogo
+settings.json
