@@ -7,6 +7,8 @@ from ..config import (
     FRUIT_GOLDEN_COLOR, FRUIT_GOLDEN_GLOW,
     FRUIT_SPEED_COLOR, FRUIT_SPEED_GLOW,
     POINTS_NORMAL, POINTS_GOLDEN, POINTS_SPEED,
+    FRUIT_POISON_COLOR, FRUIT_POISON_GLOW,
+    POINTS_NORMAL, POINTS_GOLDEN, POINTS_SPEED, POINTS_POISON,
     SPECIAL_FRUIT_LIFETIME,
     FRUIT_SPRITE_PATH, SPRITE_CELL,
 )
@@ -16,6 +18,7 @@ class FruitType(Enum):
     NORMAL = auto()
     GOLDEN = auto()
     SPEED = auto()
+    POISON = auto()
 
 
 FRUIT_CONFIG = {
@@ -42,6 +45,15 @@ FRUIT_CONFIG = {
         "growth": 1,
         "lifetime": SPECIAL_FRUIT_LIFETIME,
         "sprite_index": 2,
+    },
+
+    FruitType.POISON: {
+        "color": FRUIT_POISON_COLOR,
+        "glow": FRUIT_POISON_GLOW,
+        "points": POINTS_POISON,
+        "growth": 0,  # A gente vai tirar tamanho na cobra, não na fruta!
+        "lifetime": SPECIAL_FRUIT_LIFETIME,
+        "sprite_index": 3, # Se não tiver um 4º sprite, ele usa a cor verde
     },
 }
 

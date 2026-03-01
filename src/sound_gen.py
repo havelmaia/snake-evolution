@@ -1,5 +1,5 @@
 import pygame
-from .config import SFX_EAT, SFX_SPECIAL, SFX_GAMEOVER, BGM_MENU, BGM_GAME
+from .config import SFX_EAT, SFX_SPECIAL, SFX_GAMEOVER, SFX_SPEED, SFX_POISON, BGM_MENU, BGM_GAME
 
 
 class SoundManager:
@@ -15,6 +15,9 @@ class SoundManager:
             self.eat = pygame.mixer.Sound(SFX_EAT)
             self.special = pygame.mixer.Sound(SFX_SPECIAL)
             self.gameover = pygame.mixer.Sound(SFX_GAMEOVER)
+            self.speed = pygame.mixer.Sound(SFX_SPEED)
+            self.poison = pygame.mixer.Sound(SFX_POISON)
+
             self._apply_sfx_volume()
         except Exception as e:
             print(f"Aviso: Não foi possível carregar os efeitos sonoros. Erro: {e}")
@@ -26,6 +29,8 @@ class SoundManager:
         self.eat.set_volume(self.sfx_volume * 0.3)
         self.special.set_volume(self.sfx_volume * 0.4)
         self.gameover.set_volume(self.sfx_volume * 0.5)
+        self.speed.set_volume(self.sfx_volume * 0.4)
+        self.poison.set_volume(self.sfx_volume * 0.5)
 
     def set_sfx_volume(self, volume):
         self.sfx_volume = max(0.0, min(1.0, volume))
@@ -82,6 +87,10 @@ class SoundManager:
             self.current_music = "game"
         except Exception as e:
             print(f"Aviso: Música do jogo não encontrada. {e}")
+
+    def play_poison(self):
+        if self.enabled and self.sfx_enabled:
+            self.poison.play()
 
     def stop_music(self):
         if self.enabled:

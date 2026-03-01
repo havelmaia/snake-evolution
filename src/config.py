@@ -78,6 +78,8 @@ FRUIT_GOLDEN_COLOR = (255, 215, 0)
 FRUIT_GOLDEN_GLOW  = (255, 235, 100)
 FRUIT_SPEED_COLOR  = (130, 40,  160)
 FRUIT_SPEED_GLOW   = (180, 100, 210)
+FRUIT_POISON_COLOR = (50, 220, 50) 
+FRUIT_POISON_GLOW  = (120, 255, 120)
 
 TEXT_COLOR      = (255, 255, 255)
 TEXT_SECONDARY  = (200, 230, 160)
@@ -100,9 +102,10 @@ SPEED_BOOST_DURATION   = 80
 POINTS_NORMAL = 10
 POINTS_GOLDEN = 50
 POINTS_SPEED  = 20
+POINTS_POISON = 30
 
-SPECIAL_FRUIT_INTERVAL = 80
-SPECIAL_FRUIT_CHANCE   = 0.7
+SPECIAL_FRUIT_INTERVAL = 30
+SPECIAL_FRUIT_CHANCE   = 0.8
 SPECIAL_FRUIT_LIFETIME = 300
 
 # PARTÍCULAS
@@ -129,6 +132,8 @@ DECO_SPRITE_PATH = resource_path("assets/sprites/decorations.png")
 SFX_EAT      = resource_path("assets/sounds/eat.ogg")
 SFX_SPECIAL   = resource_path("assets/sounds/special.ogg")
 SFX_GAMEOVER  = resource_path("assets/sounds/gameover.ogg")
+SFX_SPEED     = resource_path("assets/sounds/speed.ogg")
+SFX_POISON    = resource_path("assets/sounds/poison.ogg")
 BGM_MENU      = resource_path("assets/sounds/menu_bgm.ogg")
 BGM_GAME      = resource_path("assets/sounds/game_bgm.ogg")
 

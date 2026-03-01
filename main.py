@@ -60,7 +60,7 @@ class Game:
 
         self.score = 0
         self.high_score = 0
-        self.fruits_eaten = {FruitType.NORMAL: 0, FruitType.GOLDEN: 0, FruitType.SPEED: 0}
+        self.fruits_eaten = {FruitType.NORMAL: 0, FruitType.GOLDEN: 0, FruitType.SPEED: 0, FruitType.POISON: 0}
         self.header_fruit_sprites = None
         self.state = STATE_MENU
         self.move_timer = 0
@@ -422,7 +422,7 @@ class Game:
         self.fruits.clear()
         self.particles.clear()
         self.score = 0
-        self.fruits_eaten = {FruitType.NORMAL: 0, FruitType.GOLDEN: 0, FruitType.SPEED: 0}
+        self.fruits_eaten = {FruitType.NORMAL: 0, FruitType.GOLDEN: 0, FruitType.SPEED: 0, FruitType.POISON: 0}
         self.move_timer = 0
         self.special_timer = 0
         self.state = STATE_PLAYING
@@ -600,9 +600,17 @@ class Game:
 
                 if fruit.fruit_type == FruitType.SPEED:
                     self.snake.activate_boost(SPEED_BOOST_DURATION)
-                    self.sounds.play_special()
+                    self.sounds.play_speed()
                 elif fruit.fruit_type == FruitType.GOLDEN:
                     self.sounds.play_special()
+
+                elif fruit.fruit_type == FruitType.POISON:
+                    survived = self.snake.shrink(2)
+                    if not survived:
+                        self.game_over()
+                        return
+                    self.sounds.play_poison()
+                    
                 else:
                     self.sounds.play_eat()
 
@@ -620,7 +628,7 @@ class Game:
         if self.special_timer >= SPECIAL_FRUIT_INTERVAL:
             self.special_timer = 0
             if random.random() < SPECIAL_FRUIT_CHANCE:
-                special = random.choice([FruitType.GOLDEN, FruitType.SPEED])
+                special = random.choice([FruitType.GOLDEN, FruitType.SPEED, FruitType.POISON, FruitType.POISON, FruitType.POISON])
                 self._spawn_fruit(special)
 
     # ======================================================
@@ -671,7 +679,7 @@ class Game:
 
         icon_size = 20
         gap = 6
-        fruit_order = [FruitType.NORMAL, FruitType.GOLDEN, FruitType.SPEED]
+        fruit_order = [FruitType.NORMAL, FruitType.GOLDEN, FruitType.SPEED, FruitType.POISON]
         counts = [str(self.fruits_eaten[ft]) for ft in fruit_order]
         count_surfs = [self.font_small.render(c, True, SCORE_COLOR) for c in counts]
 
